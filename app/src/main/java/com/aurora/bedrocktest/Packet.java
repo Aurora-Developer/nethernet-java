@@ -2,12 +2,13 @@ package com.aurora.bedrocktest;
 
 import android.util.Log;
 
+import org.apache.commons.codec.binary.Hex;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Arrays;
-import java.util.Map;
-import java.util.Random;
 
 public class Packet {
     private final Crypto crypto = new Crypto();
@@ -82,12 +83,15 @@ public class Packet {
             return new DiscoveryPacket(decryptedPayload);
         }
     }
-    private String bytesToHex(byte[] bytes){
-        StringBuilder sb = new StringBuilder();
-        for (byte b : bytes){
-            sb.append(String.format("%02x", b));
+
+    public static byte[] hexStringToByteArray(String s) {
+        int len = s.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+                    + Character.digit(s.charAt(i + 1), 16));
         }
-        return sb.toString();
+        return data;
     }
 
     public static class DiscoveryPacket{
@@ -130,7 +134,12 @@ public class Packet {
         private final int isHardcore;
         private final int transportLayer;
         ResponsePacket(byte[] data){
+            data = Arrays.copyOfRange(data, 4, data.length);
+            Log.d("ResponsePacket", new String(data));
+            data = hexStringToByteArray(new String(data));
             ByteBuffer buffer = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
+            // 输出所有字节
+            Log.d("ResponsePacket", "Buffer content: " + Arrays.toString(data));
             version = buffer.get() & 0xff;
             int serverNameLength = buffer.get() & 0xff;
             byte[] serverNameBytes = new byte[serverNameLength];

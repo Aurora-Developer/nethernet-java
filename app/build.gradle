@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId "com.aurora.bedrocktest"
-        minSdk 16
+        minSdk 21
         versionCode 1
         versionName "1.0"
 
@@ -36,5 +36,7 @@ dependencies {
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
-    //implementation(name: 'google-webrtc-1.0.32006', ext: 'aar')
+    implementation(name: 'google-webrtc-1.0.32006', ext: 'aar')
+    implementation(name: 'ice4j-3.0-44-g15981cf', ext: 'jar')
+    implementation("org.apache.directory.studio:org.apache.commons.codec:1.8")
 }

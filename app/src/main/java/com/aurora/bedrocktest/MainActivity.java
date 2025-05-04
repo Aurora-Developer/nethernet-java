@@ -52,13 +52,13 @@ public class MainActivity extends AppCompatActivity {
                         if (type == 1){
                             Packet.ResponsePacket responsePacket = new Packet.ResponsePacket(discoveredPacket.getData());
                             Log.d("MainActivity", responsePacket.string());
-                            Log.d("MainActivity", "开始ICE候选协商");
+                            /*Log.d("MainActivity", "开始ICE候选协商");
                             //开始交换ICE候选
                             runOnUiThread(()->{
                                 startICE(socket, serverId);
                             });
                             running = false;
-                            socketThread.interrupt();
+                            socketThread.interrupt();*/
                         }
                     }
                     Thread.sleep(1000);
@@ -70,12 +70,11 @@ public class MainActivity extends AppCompatActivity {
         socketThread.start();
     }
     private void startICE(Socket socket, long serverId){
-        Packet.MessagePacket messagePacket = new Packet.MessagePacket(serverId, webRTC.buildCandidate("192.168.1.10", "17551"));
-        byte[] finalPacket = packet.buildMessagePacket(senderId, messagePacket.pack());
+
         running = true;
         while (running){
             try {
-                socket.broadcast(finalPacket);
+
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 Log.e("MainActivity", e.getMessage()!=null?e.getMessage():"Unknown error");
