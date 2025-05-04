@@ -25,9 +25,7 @@ public class Packet {
         }
         return hash;
     }
-    public byte[] buildRequestPacket(){
-        Random random = new Random();
-        long senderId = random.nextLong();
+    public byte[] buildRequestPacket(long senderId){
         ByteBuffer payload = ByteBuffer.allocate(18).order(ByteOrder.LITTLE_ENDIAN);
         payload.putShort((short) 0x00);
         payload.putLong(senderId);
@@ -42,6 +40,8 @@ public class Packet {
         packetBuffer.put(packetLengthBuffer.array());
         packetBuffer.put(payload.array());
         byte[] packet = packetBuffer.array();
+
+
         byte[] encryptedPacket = crypto.encrypt(packet, getKey());
 
         byte[] hash = crypto.hmac(packet, getKey());
@@ -51,6 +51,27 @@ public class Packet {
         finalPacket.put(encryptedPacket);
         return finalPacket.array();
 
+    }
+    public byte[] buildMessagePacket(long senderId, byte[] data){
+        ByteBuffer payload = ByteBuffer.allocate(18+data.length).order(ByteOrder.LITTLE_ENDIAN);
+        payload.putShort((short) 0x01);
+        payload.putLong(senderId);
+        payload.put(data);
+        short packetLength = (short) payload.array().length;
+        ByteBuffer packetLengthBuffer = ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN);
+        packetLengthBuffer.putShort(packetLength);
+        ByteBuffer packetBuffer = ByteBuffer.allocate(payload.array().length + 2).order(ByteOrder.LITTLE_ENDIAN);
+        packetBuffer.put(packetLengthBuffer.array());
+        packetBuffer.put(payload.array());
+        byte[] packet = packetBuffer.array();
+
+        byte[] encryptedPacket = crypto.encrypt(packet, getKey());
+        byte[] hash = crypto.hmac(packet, getKey());
+
+        ByteBuffer finalPacket = ByteBuffer.allocate(encryptedPacket.length + hash.length).order(ByteOrder.LITTLE_ENDIAN);
+        finalPacket.put(hash);
+        finalPacket.put(encryptedPacket);
+        return finalPacket.array();
     }
     public DiscoveryPacket decodeDiscoveryPacket(byte[] data){
         if (data.length < 32){
@@ -156,6 +177,36 @@ public class Packet {
         }
         public String string(){
             return "version: " + version +"; serverName: " + serverName + "; levelName: " + levelName + "; gameType: " + gameType + "; playerNum: " + playerNum + "; maxPlayerNum: " + maxPlayerNum +"; isEditor: " + isEditor +"; isHardcore: " + isHardcore + "; transportLayer: " + transportLayer;
+        }
+    }
+    public static class MessagePacket{
+        private Long recipientId;
+        private String message;
+
+        MessagePacket(byte[] data){
+            ByteBuffer buffer = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
+            recipientId = buffer.getLong();
+            int messageLength = buffer.get() & 0xff;
+            byte[] messageBytes = new byte[messageLength];
+            buffer.get(messageBytes);
+            message = new String(messageBytes);
+        }
+        MessagePacket(Long recipientId, String message){
+            this.recipientId = recipientId;
+            this.message = message;
+        }
+        public Long getRecipientId() {
+            return recipientId;
+        }
+        public String getMessage() {
+            return message;
+        }
+        public byte[] pack(){
+            ByteBuffer buffer = ByteBuffer.allocate(8+1+message.length());
+            buffer.putLong(recipientId);
+            buffer.put((byte) message.length());
+            buffer.put(message.getBytes());
+            return buffer.array();
         }
     }
 }

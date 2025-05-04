@@ -36,4 +36,5 @@ dependencies {
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
+    //implementation(name: 'google-webrtc-1.0.32006', ext: 'aar')
 }

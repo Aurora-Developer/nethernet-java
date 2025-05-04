@@ -9,15 +9,21 @@ pluginManagement {
         }
         mavenCentral()
         gradlePluginPortal()
+        jcenter()
     }
 }
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
+        flatDir {
+            dirs 'app/libs' // 指向你放 .aar 文件的目录，通常在项目根目录或 app 模块下
+        }
         google()
         mavenCentral()
+        jcenter()
     }
 }
+
 
 rootProject.name = "BedrockTest"
 include ':app'
