@@ -11,8 +11,10 @@ import java.security.MessageDigest;
 import java.util.Arrays;
 
 public class Packet {
-    private final Crypto crypto = new Crypto();
-    public byte[] getKey() {
+    public static String connectRequest = "CONNECTREQUEST";
+    public static String connectResponse = "CONNECTRESPONSE";
+    public static String candidateadd = "CANDIDATEADD";
+    public static byte[] getKey() {
         long value = 0x00000000DEADBEEFL;
         ByteBuffer bufferLE = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN);
         bufferLE.putLong(value);
@@ -26,60 +28,13 @@ public class Packet {
         }
         return hash;
     }
-    public byte[] buildRequestPacket(long senderId){
-        ByteBuffer payload = ByteBuffer.allocate(18).order(ByteOrder.LITTLE_ENDIAN);
-        payload.putShort((short) 0x00);
-        payload.putLong(senderId);
-        for (int i = 0;i < 8; i++){
-            payload.put((byte) 0x00);
-        }
-        short packetLength = (short) payload.array().length;
-        ByteBuffer packetLengthBuffer = ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN);
-        packetLengthBuffer.putShort(packetLength);
 
-        ByteBuffer packetBuffer = ByteBuffer.allocate(18 + 2).order(ByteOrder.LITTLE_ENDIAN);
-        packetBuffer.put(packetLengthBuffer.array());
-        packetBuffer.put(payload.array());
-        byte[] packet = packetBuffer.array();
-
-
-        byte[] encryptedPacket = crypto.encrypt(packet, getKey());
-
-        byte[] hash = crypto.hmac(packet, getKey());
-
-        ByteBuffer finalPacket = ByteBuffer.allocate(encryptedPacket.length + hash.length).order(ByteOrder.LITTLE_ENDIAN);
-        finalPacket.put(hash);
-        finalPacket.put(encryptedPacket);
-        return finalPacket.array();
-
-    }
-    public byte[] buildMessagePacket(long senderId, byte[] data){
-        ByteBuffer payload = ByteBuffer.allocate(18+data.length).order(ByteOrder.LITTLE_ENDIAN);
-        payload.putShort((short) 0x01);
-        payload.putLong(senderId);
-        payload.put(data);
-        short packetLength = (short) payload.array().length;
-        ByteBuffer packetLengthBuffer = ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN);
-        packetLengthBuffer.putShort(packetLength);
-        ByteBuffer packetBuffer = ByteBuffer.allocate(payload.array().length + 2).order(ByteOrder.LITTLE_ENDIAN);
-        packetBuffer.put(packetLengthBuffer.array());
-        packetBuffer.put(payload.array());
-        byte[] packet = packetBuffer.array();
-
-        byte[] encryptedPacket = crypto.encrypt(packet, getKey());
-        byte[] hash = crypto.hmac(packet, getKey());
-
-        ByteBuffer finalPacket = ByteBuffer.allocate(encryptedPacket.length + hash.length).order(ByteOrder.LITTLE_ENDIAN);
-        finalPacket.put(hash);
-        finalPacket.put(encryptedPacket);
-        return finalPacket.array();
-    }
     public DiscoveryPacket decodeDiscoveryPacket(byte[] data){
         if (data.length < 32){
             return null;
         }else {
             byte[] payload = Arrays.copyOfRange(data, 32, data.length);
-            byte[] decryptedPayload = crypto.decrypt(payload, getKey());
+            byte[] decryptedPayload = Crypto.decrypt(payload, getKey());
             return new DiscoveryPacket(decryptedPayload);
         }
     }
@@ -110,6 +65,13 @@ public class Packet {
             this.data = dataBytes;
         }
 
+        DiscoveryPacket(short type, long senderId, byte[] data){
+            this.length = 0;
+            this.type = type;
+            this.senderId = senderId;
+            this.data = data;
+        }
+
         public short getLength(){
             return length;
         }
@@ -121,6 +83,27 @@ public class Packet {
         }
         public byte[] getData() {
             return data;
+        }
+
+        public byte[] pack(){
+            ByteBuffer payload = ByteBuffer.allocate(18+data.length).order(ByteOrder.LITTLE_ENDIAN);
+            payload.putShort(type);
+            payload.putLong(senderId);
+            payload.put(data);
+            short packetLength = (short) payload.array().length;
+            ByteBuffer packetLengthBuffer = ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN);
+            packetLengthBuffer.putShort(packetLength);
+            ByteBuffer packetBuffer = ByteBuffer.allocate(payload.array().length + 2).order(ByteOrder.LITTLE_ENDIAN);
+            packetBuffer.put(packetLengthBuffer.array());
+            packetBuffer.put(payload.array());
+            byte[] packet = packetBuffer.array();
+            byte[] encryptedPacket = Crypto.encrypt(packet, getKey());
+            byte[] hash = Crypto.hmac(packet, getKey());
+
+            ByteBuffer finalPacket = ByteBuffer.allocate(encryptedPacket.length + hash.length).order(ByteOrder.LITTLE_ENDIAN);
+            finalPacket.put(hash);
+            finalPacket.put(encryptedPacket);
+            return finalPacket.array();
         }
     }
     public static class ResponsePacket{
@@ -135,11 +118,9 @@ public class Packet {
         private final int transportLayer;
         ResponsePacket(byte[] data){
             data = Arrays.copyOfRange(data, 4, data.length);
-            Log.d("ResponsePacket", new String(data));
             data = hexStringToByteArray(new String(data));
             ByteBuffer buffer = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
             // 输出所有字节
-            Log.d("ResponsePacket", "Buffer content: " + Arrays.toString(data));
             version = buffer.get() & 0xff;
             int serverNameLength = buffer.get() & 0xff;
             byte[] serverNameBytes = new byte[serverNameLength];
@@ -211,9 +192,9 @@ public class Packet {
             return message;
         }
         public byte[] pack(){
-            ByteBuffer buffer = ByteBuffer.allocate(8+1+message.length());
+            ByteBuffer buffer = ByteBuffer.allocate(8+4+message.length());
             buffer.putLong(recipientId);
-            buffer.put((byte) message.length());
+            buffer.putInt(message.length());
             buffer.put(message.getBytes());
             return buffer.array();
         }

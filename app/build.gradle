@@ -39,4 +39,6 @@ dependencies {
     implementation(name: 'google-webrtc-1.0.32006', ext: 'aar')
     implementation(name: 'ice4j-3.0-44-g15981cf', ext: 'jar')
     implementation("org.apache.directory.studio:org.apache.commons.codec:1.8")
+    implementation 'org.bouncycastle:bcprov-jdk15on:1.70'
+    implementation 'org.bouncycastle:bcpkix-jdk15on:1.70'
 }

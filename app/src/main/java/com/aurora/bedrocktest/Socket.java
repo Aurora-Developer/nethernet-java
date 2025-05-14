@@ -2,6 +2,9 @@ package com.aurora.bedrocktest;
 import android.util.Log;
 
 import java.net.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 public class Socket {
     private final int port = 17551;
@@ -24,7 +27,7 @@ public class Socket {
             DatagramPacket packet = new DatagramPacket(data, data.length, address, this.targetPort);
             this.socket.send(packet);
         }catch (Exception e){
-            Log.d("Socket", e.getMessage()!=null?e.getMessage():"null");
+            Log.d("Socket", e.getMessage()!=null?e.getMessage():"1");
         }
     }
 
@@ -34,23 +37,27 @@ public class Socket {
             DatagramPacket packet = new DatagramPacket(data, data.length, address, this.targetPort);
             this.socket.send(packet);
         }catch (Exception e){
-            Log.d("Socket", e.getMessage()!=null?e.getMessage():"null");
+            Log.d("Socket", e.getMessage()!=null?e.getMessage():"2");
         }
     }
 
-    public byte[] receive(){
+    public Map<String, Object> receive(){
         byte[] data = new byte[0];
+        String targetIp = "";
         try{
             byte[] buffer = new byte[1024];
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+            targetIp = packet.getAddress()!=null?packet.getAddress().getHostAddress():"";
             this.socket.receive(packet);
-            byte[] originData = packet.getData();
             data = new byte[packet.getLength()];
             System.arraycopy(buffer, 0, data, 0, packet.getLength());
         }catch (Exception e){
-            Log.d("Socket", e.getMessage()!=null?e.getMessage():"null");
+            Log.d("Socket", e.getMessage()!=null?e.getMessage():"3");
         }
-        return data;
+        Map<String, Object> callback = new HashMap<>();
+        callback.put("ip", targetIp);
+        callback.put("data", data);
+        return callback;
     }
 
     public void close(){
