@@ -7,16 +7,21 @@ import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
+import java.io.StringWriter;
 import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.KeyStore;
 import java.security.MessageDigest;
+import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.SecureRandom;
 import java.security.Security;
+import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.security.spec.ECGenParameterSpec;
 import java.util.Date;
@@ -25,6 +30,9 @@ import javax.crypto.Cipher;
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 
 public class Crypto {
     public static byte[] encrypt(byte[] data, byte[] key) {
@@ -103,4 +111,20 @@ public class Crypto {
         }
         return fingerprint.substring(0, fingerprint.length() - 1); // 移除最后一个冒号
     }
+
+    public static String convertPrivateKeyToPEM(PrivateKey privateKey) throws Exception {
+        StringWriter writer = new StringWriter();
+        JcaPEMWriter pemWriter = new JcaPEMWriter(writer);
+        pemWriter.writeObject(privateKey);
+        pemWriter.close();
+        return writer.toString();
+    }
+    public static String convertCertificateToPEM(X509Certificate certificate) throws Exception {
+        StringWriter writer = new StringWriter();
+        JcaPEMWriter pemWriter = new JcaPEMWriter(writer);
+        pemWriter.writeObject(certificate);
+        pemWriter.close();
+        return writer.toString();
+    }
+
 }

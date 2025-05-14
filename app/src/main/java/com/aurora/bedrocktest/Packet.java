@@ -11,9 +11,9 @@ import java.security.MessageDigest;
 import java.util.Arrays;
 
 public class Packet {
-    public static String connectRequest = "CONNECTREQUEST";
-    public static String connectResponse = "CONNECTRESPONSE";
-    public static String candidateadd = "CANDIDATEADD";
+    public static final String connectRequest = "CONNECTREQUEST";
+    public static final String connectResponse = "CONNECTRESPONSE";
+    public static final String candidateadd = "CANDIDATEADD";
     public static byte[] getKey() {
         long value = 0x00000000DEADBEEFL;
         ByteBuffer bufferLE = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN);
@@ -89,6 +89,7 @@ public class Packet {
             ByteBuffer payload = ByteBuffer.allocate(18+data.length).order(ByteOrder.LITTLE_ENDIAN);
             payload.putShort(type);
             payload.putLong(senderId);
+            payload.put(new byte[8]);
             payload.put(data);
             short packetLength = (short) payload.array().length;
             ByteBuffer packetLengthBuffer = ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN);
@@ -171,31 +172,31 @@ public class Packet {
     }
     public static class MessagePacket{
         private Long recipientId;
-        private String message;
+        private byte[] message;
 
         MessagePacket(byte[] data){
             ByteBuffer buffer = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
             recipientId = buffer.getLong();
-            int messageLength = buffer.get() & 0xff;
+            int messageLength = buffer.getInt();
             byte[] messageBytes = new byte[messageLength];
             buffer.get(messageBytes);
-            message = new String(messageBytes);
+            message = messageBytes;
         }
         MessagePacket(Long recipientId, String message){
             this.recipientId = recipientId;
-            this.message = message;
+            this.message = message.getBytes();
         }
         public Long getRecipientId() {
             return recipientId;
         }
-        public String getMessage() {
+        public byte[] getMessage() {
             return message;
         }
         public byte[] pack(){
-            ByteBuffer buffer = ByteBuffer.allocate(8+4+message.length());
+            ByteBuffer buffer = ByteBuffer.allocate(8+4+message.length).order(ByteOrder.LITTLE_ENDIAN);
             buffer.putLong(recipientId);
-            buffer.putInt(message.length());
-            buffer.put(message.getBytes());
+            buffer.putInt(message.length);
+            buffer.put(message);
             return buffer.array();
         }
     }

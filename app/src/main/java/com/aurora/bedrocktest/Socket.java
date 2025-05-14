@@ -47,8 +47,8 @@ public class Socket {
         try{
             byte[] buffer = new byte[1024];
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-            targetIp = packet.getAddress()!=null?packet.getAddress().getHostAddress():"";
             this.socket.receive(packet);
+            targetIp = packet.getAddress()!=null?packet.getAddress().getHostAddress():"";
             data = new byte[packet.getLength()];
             System.arraycopy(buffer, 0, data, 0, packet.getLength());
         }catch (Exception e){
