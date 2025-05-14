@@ -10,9 +10,12 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.webrtc.RtcCertificatePem;
 
+import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
@@ -22,6 +25,7 @@ import java.security.Provider;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.ECGenParameterSpec;
 import java.util.Date;
@@ -126,5 +130,30 @@ public class Crypto {
         pemWriter.close();
         return writer.toString();
     }
+    public static String getFingerprintFromRtcCertificate(RtcCertificatePem certPem) throws Exception {
+        String certString = certPem.certificate; // PEM 格式的 X.509 证书
 
+        // 1. 将 PEM 格式转为 X509Certificate 对象
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        ByteArrayInputStream certStream = new ByteArrayInputStream(certString.getBytes(StandardCharsets.UTF_8));
+        X509Certificate cert = (X509Certificate) cf.generateCertificate(certStream);
+
+        // 2. 计算 SHA-256 指纹
+        byte[] encoded = cert.getEncoded();
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        byte[] digest = md.digest(encoded);
+
+        return bytesToColonHex(digest);
+    }
+
+    private static String bytesToColonHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < bytes.length; i++) {
+            sb.append(String.format("%02X", bytes[i]));
+            if (i < bytes.length - 1) {
+                sb.append(":");
+            }
+        }
+        return sb.toString();
+    }
 }

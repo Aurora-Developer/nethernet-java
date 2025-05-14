@@ -10,7 +10,7 @@ import java.util.Random;
 
 public class WebRTC {
     private static final int DTLS_PORT = 19133;
-    private static final String LOCAL_IP = "192.168.1.8";
+    private static final String LOCAL_IP = "192.168.1.22";
     public static String createSdp(long sessionId, String fingerprint) {
         // 创建 SDP 内容，作为字符串构造 SessionDescription
         String sdpString = "v=0\r\n" +
@@ -26,7 +26,7 @@ public class WebRTC {
                 "a=ice-pwd:minecraft_bedrock_aurora\r\n" +
                 "a=ice-options:trickle\r\n" +
                 "a=fingerprint:sha-256 "+ fingerprint +"\r\n" +
-                "a=setup:active\r\n" +
+                "a=setup:actpass\r\n" +
                 "a=mid:0\r\n" +
                 "a=sctp-port:5000\r\n" +
                 "a=max-message-size:262144\r\n";
